@@ -11,32 +11,7 @@ const playText = "▶ Play";
 let hls;
 
 startBtn.addEventListener("click", () => {
-  if (Hls.isSupported()) {
-    hls = new Hls();
-    hls.loadSource(videoSrc);
-    hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      video.muted = false;
-      video
-        .play()
-        .then(setupControls)
-        .catch((err) => {
-          console.error("Autoplay error:", err);
-        });
-    });
-  } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-    video.src = videoSrc;
-    video.addEventListener("loadedmetadata", () => {
-      video.muted = false;
-      video
-        .play()
-        .then(setupControls)
-        .catch((err) => {
-          console.error("Autoplay error:", err);
-        });
-    });
-  }
-
+  startStream();
   startOverlay.style.display = "none";
 });
 
@@ -54,6 +29,11 @@ document.addEventListener("keydown", function (event) {
   switch (event.keyCode) {
     case 415: // Play button
     case 19: // Pause button
+    case 404: // Green button
+      event.preventDefault();
+      refreshStream();
+      break;
+
     case 32: // Space bar (backup)
       event.preventDefault();
       togglePlayPause();
@@ -118,4 +98,47 @@ function showControlsTemporarily() {
   controlsTimeout = setTimeout(() => {
     controls.classList.remove("show");
   }, 3000); // Sakrij nakon 3 sekunde
+}
+
+function startStream() {
+  if (Hls.isSupported()) {
+    hls = new Hls();
+    hls.loadSource(videoSrc);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      video.muted = false;
+      video
+        .play()
+        .then(setupControls)
+        .catch((err) => {
+          console.error("Autoplay error:", err);
+        });
+    });
+  } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+    video.src = videoSrc;
+    video.addEventListener("loadedmetadata", () => {
+      video.muted = false;
+      video
+        .play()
+        .then(setupControls)
+        .catch((err) => {
+          console.error("Autoplay error:", err);
+        });
+    });
+  }
+}
+
+function refreshStream() {
+  console.log("Refreshing stream...");
+
+  if (hls) {
+    hls.destroy();
+    hls = null;
+  }
+
+  video.pause();
+  video.src = "";
+  video.load();
+
+  startStream(); // Ponovo pokreni stream koristeći istu funkciju
 }
