@@ -4,7 +4,7 @@
   "vendor": "My Company",
   "type": "web",
   "main": "index.html",
-  "title": "emeltv",
+  "title": "emeltv", 
   "icon": "icon.png",
   "requiredPermissions": [
     "time.query",
