@@ -66,8 +66,11 @@ document.addEventListener("keydown", function (event) {
 
     case 13: // OK/Enter
       event.preventDefault();
-      showControlsTemporarily();
-
+      if (controls.classList.contains("show")) {
+        togglePlayPause(); // ako su kontrole već vidljive, izvrši toggle
+      } else {
+        showControlsTemporarily(); // inače samo pokaži kontrole
+      }
       break;
   }
 });
@@ -111,5 +114,5 @@ function showControlsTemporarily() {
   clearTimeout(controlsTimeout);
   controlsTimeout = setTimeout(() => {
     controls.classList.remove("show");
-  }, 4000); // Sakrij nakon 4 sekunde
+  }, 3000); // Sakrij nakon 3 sekunde
 }
