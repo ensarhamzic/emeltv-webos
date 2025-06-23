@@ -8,6 +8,12 @@
   "icon": "icon.png",
   "requiredPermissions": [
     "time.query",
-    "activity.operation"
-  ]
+    "activity.operation",
+    "media.operation"
+  ],
+  "mediaKeyHandling": {
+    "play": true,
+    "pause": true,
+    "stop": true
+  }
 }

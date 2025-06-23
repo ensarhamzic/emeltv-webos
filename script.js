@@ -1,6 +1,5 @@
 const video = document.getElementById("video");
 const playPauseBtn = document.getElementById("playPauseBtn");
-const muteBtn = document.getElementById("muteBtn");
 const startOverlay = document.getElementById("startOverlay");
 const startBtn = document.getElementById("startBtn");
 const controls = document.querySelector(".controls");
@@ -39,9 +38,8 @@ startBtn.addEventListener("click", () => {
 });
 
 function showControls() {
-  controls.style.display = "block";
+  controls.classList.add("show");
   playPauseBtn.textContent = "Pause";
-  muteBtn.textContent = video.muted ? "Unmute" : "Mute";
 }
 
 playPauseBtn.addEventListener("click", () => {
@@ -56,5 +54,56 @@ playPauseBtn.addEventListener("click", () => {
 
 muteBtn.addEventListener("click", () => {
   video.muted = !video.muted;
-  muteBtn.textContent = video.muted ? "Unmute" : "Mute";
 });
+
+// WebOS Media Key Handler
+document.addEventListener("keydown", function (event) {
+  console.log("Key pressed:", event.keyCode, event.key);
+
+  switch (event.keyCode) {
+    case 415: // Play button
+    case 19: // Pause button
+    case 32: // Space bar (backup)
+      event.preventDefault();
+      togglePlayPause();
+      break;
+
+    case 461: // Back button
+      event.preventDefault();
+      // Optional: možeš dodati funkcionalnost za Back dugme
+      break;
+
+    case 13: // Enter/OK button
+      event.preventDefault();
+      togglePlayPause();
+      break;
+  }
+});
+
+// Function za toggle play/pause (izvuci logiku iz event listener-a)
+function togglePlayPause() {
+  if (!video.src && !hls) return; // Ne radi ništa ako video nije učitan
+
+  if (video.paused) {
+    video.play();
+    playPauseBtn.textContent = "Pause";
+    console.log("Playing via remote");
+  } else {
+    video.pause();
+    playPauseBtn.textContent = "Play";
+    console.log("Paused via remote");
+  }
+}
+
+// Takođe refaktorisi postojeći button event listener
+playPauseBtn.addEventListener("click", togglePlayPause);
+
+// WebOS specific - registruj media keys
+if (typeof webOSSystem !== "undefined") {
+  try {
+    // Registruj potrebne media keys
+    webOSSystem.keyboard.isShowing = false;
+  } catch (e) {
+    console.log("webOSSystem not available:", e);
+  }
+}
