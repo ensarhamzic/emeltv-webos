@@ -5,6 +5,9 @@ const startBtn = document.getElementById("startBtn");
 const controls = document.querySelector(".controls");
 const videoSrc = "https://emelplayout.ddnsguru.com/live/tv_emel_test101.m3u8";
 
+const pauseText = "|| Pause";
+const playText = "▶ Play";
+
 let hls;
 
 startBtn.addEventListener("click", () => {
@@ -16,7 +19,7 @@ startBtn.addEventListener("click", () => {
       video.muted = false;
       video
         .play()
-        .then(showControls)
+        .then(setupControls)
         .catch((err) => {
           console.error("Autoplay error:", err);
         });
@@ -27,7 +30,7 @@ startBtn.addEventListener("click", () => {
       video.muted = false;
       video
         .play()
-        .then(showControls)
+        .then(setupControls)
         .catch((err) => {
           console.error("Autoplay error:", err);
         });
@@ -37,24 +40,12 @@ startBtn.addEventListener("click", () => {
   startOverlay.style.display = "none";
 });
 
-function showControls() {
-  controls.classList.add("show");
-  playPauseBtn.textContent = "Pause";
+function setupControls() {
+  video.pause();
+  video.play();
+  controls.classList.remove("show");
+  playPauseBtn.textContent = pauseText;
 }
-
-playPauseBtn.addEventListener("click", () => {
-  if (video.paused) {
-    video.play();
-    playPauseBtn.textContent = "Pause";
-  } else {
-    video.pause();
-    playPauseBtn.textContent = "Play";
-  }
-});
-
-muteBtn.addEventListener("click", () => {
-  video.muted = !video.muted;
-});
 
 // WebOS Media Key Handler
 document.addEventListener("keydown", function (event) {
@@ -73,26 +64,29 @@ document.addEventListener("keydown", function (event) {
       // Optional: možeš dodati funkcionalnost za Back dugme
       break;
 
-    case 13: // Enter/OK button
+    case 13: // OK/Enter
       event.preventDefault();
-      togglePlayPause();
+      showControlsTemporarily();
+
       break;
   }
 });
 
 // Function za toggle play/pause (izvuci logiku iz event listener-a)
 function togglePlayPause() {
-  if (!video.src && !hls) return; // Ne radi ništa ako video nije učitan
+  if (!video.src && !hls) return;
+
+  console.log("Video is playing:", !video.paused);
 
   if (video.paused) {
     video.play();
-    playPauseBtn.textContent = "Pause";
     console.log("Playing via remote");
   } else {
     video.pause();
-    playPauseBtn.textContent = "Play";
     console.log("Paused via remote");
   }
+
+  showControlsTemporarily();
 }
 
 // Takođe refaktorisi postojeći button event listener
@@ -106,4 +100,16 @@ if (typeof webOSSystem !== "undefined") {
   } catch (e) {
     console.log("webOSSystem not available:", e);
   }
+}
+
+let controlsTimeout;
+
+function showControlsTemporarily() {
+  controls.classList.add("show");
+  playPauseBtn.textContent = video.paused ? playText : pauseText;
+
+  clearTimeout(controlsTimeout);
+  controlsTimeout = setTimeout(() => {
+    controls.classList.remove("show");
+  }, 4000); // Sakrij nakon 4 sekunde
 }
