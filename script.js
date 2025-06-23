@@ -66,7 +66,10 @@ document.addEventListener("keydown", function (event) {
 
     case 13: // OK/Enter
       event.preventDefault();
-      if (controls.classList.contains("show")) {
+      if (startOverlay.style.display !== "none") {
+        // Ako je overlay prisutan, pokreni stream
+        startBtn.click();
+      } else if (controls.classList.contains("show")) {
         togglePlayPause(); // ako su kontrole već vidljive, izvrši toggle
       } else {
         showControlsTemporarily(); // inače samo pokaži kontrole

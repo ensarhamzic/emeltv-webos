@@ -107,5 +107,4 @@ video {
   transform: translateX(-50%);
   text-align: center;
   font-weight: normal;
-  pointer-events: none;
 }
