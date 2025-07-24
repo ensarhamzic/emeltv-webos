@@ -3,7 +3,6 @@ const playPauseBtn = document.getElementById("playPauseBtn");
 const startOverlay = document.getElementById("startOverlay");
 const startBtn = document.getElementById("startBtn");
 const controls = document.querySelector(".controls");
-const videoSrc = "https://emelplayout.ddnsguru.com/live/tv_emel_test101.m3u8";
 
 const pauseText = "|| Pause";
 const playText = "▶ Play";
@@ -101,31 +100,25 @@ function showControlsTemporarily() {
 }
 
 function startStream() {
-  if (Hls.isSupported()) {
-    hls = new Hls();
-    hls.loadSource(videoSrc);
-    hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      video.muted = false;
-      video
-        .play()
-        .then(setupControls)
-        .catch((err) => {
-          console.error("Autoplay error:", err);
-        });
+  console.log("Fetching stream URL from local backend…");
+
+  fetch("http://localhost:3000/stream-url")
+    .then(async (res) => {
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Stream URL fetch failed: ${res.status} ${text}`);
+      }
+      return res.json();
+    })
+    .then((data) => {
+      const hlsUrl = data.stream_url;
+      console.log("Received stream URL:", hlsUrl);
+      playStream(hlsUrl);
+    })
+    .catch((err) => {
+      console.error("Error during stream start:", err);
+      retryLater();
     });
-  } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-    video.src = videoSrc;
-    video.addEventListener("loadedmetadata", () => {
-      video.muted = false;
-      video
-        .play()
-        .then(setupControls)
-        .catch((err) => {
-          console.error("Autoplay error:", err);
-        });
-    });
-  }
 }
 
 function refreshStream() {
@@ -140,5 +133,63 @@ function refreshStream() {
   video.src = "";
   video.load();
 
-  startStream(); // Ponovo pokreni stream koristeći istu funkciju
+  startStream(); // Ponovo pokreni stream koristeći novu logiku
 }
+
+// helper funkcija za retry
+function retryLater() {
+  console.log("Retrying in 10 seconds…");
+  setTimeout(startStream, 10000);
+}
+
+// helper funkcija za pokretanje HLS playera
+function playStream(hlsUrl) {
+  if (hls) {
+    hls.destroy();
+    hls = null;
+  }
+
+  if (Hls.isSupported()) {
+    hls = new Hls();
+    hls.loadSource(hlsUrl);
+    hls.attachMedia(video);
+
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      video.muted = false;
+      video
+        .play()
+        .then(setupControls)
+        .catch((err) => {
+          console.error("Autoplay error:", err);
+        });
+    });
+
+    hls.on(Hls.Events.ERROR, (event, data) => {
+      console.error("HLS error:", data);
+      if (data.fatal) {
+        refreshStream();
+      }
+    });
+  } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+    video.src = hlsUrl;
+    video.addEventListener("loadedmetadata", () => {
+      video.muted = false;
+      video
+        .play()
+        .then(setupControls)
+        .catch((err) => {
+          console.error("Autoplay error:", err);
+        });
+    });
+
+    video.addEventListener("error", () => {
+      refreshStream();
+    });
+  }
+}
+
+// automatski restart i na playback error
+video.addEventListener("error", () => {
+  console.error("Playback error detected, restarting stream.");
+  refreshStream();
+});
